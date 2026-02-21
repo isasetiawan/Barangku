@@ -91,28 +91,13 @@ class ObjectDetectionService {
         }
     }
     
-    /// Load YOLO CoreML model
+    /// Load YOLO CoreML model — menggunakan Xcode auto-generated class
     private func loadYOLOModel() throws -> VNCoreMLModel? {
-        // Coba beberapa nama model yang mungkin ada di bundle
-        let modelNames = ["YOLOv3TinyInt8LUT", "YOLOv3Tiny", "YOLOv3", "yolov8n", "yolov8s"]
-        
-        for name in modelNames {
-            if let modelURL = Bundle.main.url(forResource: name, withExtension: "mlmodelc") {
-                let mlModel = try MLModel(contentsOf: modelURL)
-                return try VNCoreMLModel(for: mlModel)
-            }
-        }
-        
-        // Coba compiled model
-        for name in modelNames {
-            if let modelURL = Bundle.main.url(forResource: name, withExtension: "mlmodel") {
-                let compiledURL = try MLModel.compileModel(at: modelURL)
-                let mlModel = try MLModel(contentsOf: compiledURL)
-                return try VNCoreMLModel(for: mlModel)
-            }
-        }
-        
-        return nil
+        // Gunakan class YOLOv3TinyInt8LUT yang di-generate Xcode dari .mlmodel
+        let config = MLModelConfiguration()
+        config.computeUnits = .all
+        let mlModel = try YOLOv3TinyInt8LUT(configuration: config).model
+        return try VNCoreMLModel(for: mlModel)
     }
     
     /// Process YOLO detection results
