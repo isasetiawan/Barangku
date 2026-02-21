@@ -17,6 +17,16 @@ struct ContentView: View {
     @State private var showAddItem = false
     @State private var sortNewestFirst = true
     @State private var selectedItem: Item?
+    @AppStorage("itemsViewMode") private var viewModeRawValue: String = ViewMode.list.rawValue
+    
+    private var viewMode: ViewMode {
+        ViewMode(rawValue: viewModeRawValue) ?? .list
+    }
+    
+    private enum ViewMode: String {
+        case list
+        case grid
+    }
     
     /// Filtered items berdasarkan search dan kategori
     private var filteredItems: [Item] {
@@ -37,6 +47,13 @@ struct ContentView: View {
         }
         
         return result
+    }
+    
+    private var displayedItems: [Item] {
+        let sorted = filteredItems.sorted { lhs, rhs in
+            sortNewestFirst ? lhs.createdAt > rhs.createdAt : lhs.createdAt < rhs.createdAt
+        }
+        return sorted
     }
     
     /// Hitung jumlah item per kategori
@@ -60,7 +77,11 @@ struct ContentView: View {
                 if filteredItems.isEmpty {
                     emptyStateView
                 } else {
-                    itemListView
+                    if viewMode == .list {
+                        itemListView
+                    } else {
+                        itemGridView
+                    }
                 }
             }
             .navigationTitle("Barangku")
@@ -91,6 +112,19 @@ struct ContentView: View {
                         } label: {
                             Image(systemName: "arrow.up.arrow.down")
                         }
+                    }
+                }
+                
+                ToolbarItem(placement: .topBarTrailing) {
+                    if !items.isEmpty {
+                        Button {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                viewModeRawValue = viewMode == .list ? ViewMode.grid.rawValue : ViewMode.list.rawValue
+                            }
+                        } label: {
+                            Image(systemName: viewMode == .list ? "square.grid.2x2" : "list.bullet")
+                        }
+                        .accessibilityLabel(viewMode == .list ? "Tampilan grid" : "Tampilan list")
                     }
                 }
             }
@@ -171,7 +205,7 @@ struct ContentView: View {
     
     private var itemListView: some View {
         List {
-            ForEach(filteredItems) { item in
+            ForEach(displayedItems) { item in
                 Button {
                     selectedItem = item
                 } label: {
@@ -182,6 +216,30 @@ struct ContentView: View {
             .onDelete(perform: deleteItems)
         }
         .listStyle(.plain)
+    }
+    
+    private var itemGridView: some View {
+        ScrollView {
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 160), spacing: 12)], spacing: 12) {
+                ForEach(displayedItems) { item in
+                    Button {
+                        selectedItem = item
+                    } label: {
+                        ItemGridCardView(item: item)
+                    }
+                    .buttonStyle(.plain)
+                    .contextMenu {
+                        Button(role: .destructive) {
+                            deleteItem(item)
+                        } label: {
+                            Label("Hapus", systemImage: "trash")
+                        }
+                    }
+                }
+            }
+            .padding(.horizontal)
+            .padding(.vertical, 12)
+        }
     }
     
     // MARK: - Empty State
@@ -235,10 +293,16 @@ struct ContentView: View {
     
     private func deleteItems(offsets: IndexSet) {
         withAnimation {
-            let itemsToDelete = offsets.map { filteredItems[$0] }
+            let itemsToDelete = offsets.map { displayedItems[$0] }
             for item in itemsToDelete {
                 modelContext.delete(item)
             }
+        }
+    }
+    
+    private func deleteItem(_ item: Item) {
+        withAnimation {
+            modelContext.delete(item)
         }
     }
 }
@@ -293,6 +357,57 @@ struct ItemRowView: View {
                 .foregroundStyle(.tertiary)
         }
         .padding(.vertical, 4)
+    }
+}
+
+// MARK: - Item Grid Card View
+
+struct ItemGridCardView: View {
+    let item: Item
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Group {
+                if let data = item.photoData, let uiImage = UIImage(data: data) {
+                    Image(uiImage: uiImage)
+                        .resizable()
+                        .scaledToFill()
+                } else {
+                    Image(systemName: item.category.icon)
+                        .font(.title2)
+                        .foregroundStyle(item.category.color)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background(item.category.color.opacity(0.12))
+                }
+            }
+            .frame(height: 110)
+            .clipped()
+            
+            Text(item.name)
+                .font(.subheadline)
+                .fontWeight(.semibold)
+                .foregroundStyle(.primary)
+                .lineLimit(2)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            
+            HStack(spacing: 6) {
+                CategoryBadgeView(category: item.category, showIcon: false, size: .small)
+                
+                if item.quantity > 1 {
+                    Text("×\(item.quantity)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+        .padding(10)
+        .background(Color(.systemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color(.systemGray5), lineWidth: 1)
+        )
+        .shadow(color: Color(.systemGray5), radius: 2, x: 0, y: 1)
     }
 }
 
