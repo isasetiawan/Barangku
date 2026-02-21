@@ -237,8 +237,8 @@ struct ContentView: View {
                     }
                 }
             }
-            .padding(.horizontal)
-            .padding(.vertical, 12)
+            .padding(.top, 8)
+            .padding(.bottom, 12)
         }
     }
     
@@ -366,7 +366,7 @@ struct ItemGridCardView: View {
     let item: Item
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 6) {
             Group {
                 if let data = item.photoData, let uiImage = UIImage(data: data) {
                     Image(uiImage: uiImage)
@@ -374,17 +374,18 @@ struct ItemGridCardView: View {
                         .scaledToFill()
                 } else {
                     Image(systemName: item.category.icon)
-                        .font(.title2)
+                        .font(.title3)
                         .foregroundStyle(item.category.color)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .background(item.category.color.opacity(0.12))
                 }
             }
-            .frame(height: 110)
+            .frame(height: 88)
             .clipped()
+            .clipShape(RoundedRectangle(cornerRadius: 8))
             
             Text(item.name)
-                .font(.subheadline)
+                .font(.footnote)
                 .fontWeight(.semibold)
                 .foregroundStyle(.primary)
                 .lineLimit(2)
@@ -395,19 +396,19 @@ struct ItemGridCardView: View {
                 
                 if item.quantity > 1 {
                     Text("×\(item.quantity)")
-                        .font(.caption)
+                        .font(.caption2)
                         .foregroundStyle(.secondary)
                 }
             }
         }
-        .padding(10)
+        .padding(8)
         .background(Color(.systemBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .clipShape(RoundedRectangle(cornerRadius: 10))
         .overlay(
-            RoundedRectangle(cornerRadius: 12)
+            RoundedRectangle(cornerRadius: 10)
                 .stroke(Color(.systemGray5), lineWidth: 1)
         )
-        .shadow(color: Color(.systemGray5), radius: 2, x: 0, y: 1)
+        .shadow(color: Color(.systemGray5), radius: 1, x: 0, y: 1)
     }
 }
 
