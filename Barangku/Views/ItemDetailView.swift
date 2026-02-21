@@ -26,44 +26,55 @@ struct ItemDetailView: View {
     @State private var editImageData: Data?
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: 20) {
-                // MARK: - Foto
-                photoSection
-                
-                // MARK: - Info
-                infoSection
-                
-                // MARK: - Edit / Delete buttons
-                if !isEditing {
-                    actionButtons
-                }
-            }
-            .padding()
-        }
-        .navigationTitle(isEditing ? "Edit Barang" : item.name)
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            if isEditing {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Batal") {
-                        cancelEditing()
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 20) {
+                    // MARK: - Foto
+                    photoSection
+                    
+                    // MARK: - Info
+                    infoSection
+                    
+                    // MARK: - Edit / Delete buttons
+                    if !isEditing {
+                        actionButtons
                     }
                 }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Simpan") {
-                        saveEdits()
+                .padding()
+            }
+            .navigationTitle(isEditing ? "Edit Barang" : item.name)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                if isEditing {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Batal") {
+                            cancelEditing()
+                        }
                     }
-                    .fontWeight(.semibold)
-                    .disabled(editName.trimmingCharacters(in: .whitespaces).isEmpty)
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Simpan") {
+                            saveEdits()
+                        }
+                        .fontWeight(.semibold)
+                        .disabled(editName.trimmingCharacters(in: .whitespaces).isEmpty)
+                    }
+                } else {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button {
+                            dismiss()
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundStyle(.secondary)
+                        }
+                    }
                 }
             }
-        }
-        .alert("Hapus Barang", isPresented: $showDeleteConfirmation) {
-            Button("Hapus", role: .destructive) { deleteItem() }
-            Button("Batal", role: .cancel) { }
-        } message: {
-            Text("Apakah kamu yakin ingin menghapus \"\(item.name)\"?")
+            .alert("Hapus Barang", isPresented: $showDeleteConfirmation) {
+                Button("Hapus", role: .destructive) { deleteItem() }
+                Button("Batal", role: .cancel) { }
+            } message: {
+                Text("Apakah kamu yakin ingin menghapus \"\(item.name)\"?")
+            }
         }
     }
     
@@ -300,13 +311,11 @@ struct ItemDetailView: View {
 }
 
 #Preview {
-    NavigationStack {
-        ItemDetailView(item: Item(
-            name: "MacBook Pro",
-            category: .electronics,
-            quantity: 1,
-            notes: "MacBook Pro M3 14 inch"
-        ))
-    }
+    ItemDetailView(item: Item(
+        name: "MacBook Pro",
+        category: .electronics,
+        quantity: 1,
+        notes: "MacBook Pro M3 14 inch"
+    ))
     .modelContainer(for: Item.self, inMemory: true)
 }

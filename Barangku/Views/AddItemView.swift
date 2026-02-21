@@ -55,6 +55,9 @@ struct AddItemView: View {
                         .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
             }
+            .onAppear {
+                resetForm()
+            }
         }
     }
     
@@ -107,7 +110,7 @@ struct AddItemView: View {
                 }
             }
             
-            ForEach(detectionService.detectionResults.prefix(3)) { result in
+            ForEach(detectionService.detectionResults.prefix(5)) { result in
                 Button {
                     applyDetectionResult(result)
                 } label: {
@@ -120,9 +123,14 @@ struct AddItemView: View {
                             Text(result.suggestedName)
                                 .font(.subheadline)
                                 .fontWeight(.medium)
-                            Text(result.category.rawValue)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
+                            HStack(spacing: 4) {
+                                Text(result.category.rawValue)
+                                Text("·")
+                                Text(result.label)
+                                    .italic()
+                            }
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                         }
                         
                         Spacer()
@@ -146,7 +154,7 @@ struct AddItemView: View {
             }
             
             if !hasAutoFilled {
-                Text("Ketuk hasil untuk mengisi otomatis")
+                Text("Ketuk hasil untuk mengisi nama & kategori otomatis")
                     .font(.caption)
                     .foregroundStyle(.tertiary)
             }
@@ -278,6 +286,18 @@ struct AddItemView: View {
         
         modelContext.insert(item)
         dismiss()
+    }
+    
+    private func resetForm() {
+        name = ""
+        selectedCategory = .other
+        quantity = 1
+        notes = ""
+        selectedImage = nil
+        imageData = nil
+        detectionService = ObjectDetectionService()
+        showDetectionResults = false
+        hasAutoFilled = false
     }
 }
 

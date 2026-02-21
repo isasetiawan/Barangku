@@ -91,12 +91,14 @@ class ObjectDetectionService {
         }
     }
     
-    /// Load YOLO CoreML model — menggunakan Xcode auto-generated class
+    /// Load YOLO CoreML model langsung dari bundle (skip generated class untuk menghindari warning precisionRecallCurves)
     private func loadYOLOModel() throws -> VNCoreMLModel? {
-        // Gunakan class YOLOv3TinyInt8LUT yang di-generate Xcode dari .mlmodel
+        guard let modelURL = Bundle.main.url(forResource: "YOLOv3", withExtension: "mlmodelc") else {
+            return nil
+        }
         let config = MLModelConfiguration()
         config.computeUnits = .all
-        let mlModel = try YOLOv3TinyInt8LUT(configuration: config).model
+        let mlModel = try MLModel(contentsOf: modelURL, configuration: config)
         return try VNCoreMLModel(for: mlModel)
     }
     
@@ -104,7 +106,7 @@ class ObjectDetectionService {
     private func processYOLOResults(request: VNRequest) -> [DetectionResult] {
         // YOLO returns VNRecognizedObjectObservation
         if let observations = request.results as? [VNRecognizedObjectObservation] {
-            return observations
+            let all = observations
                 .compactMap { observation -> DetectionResult? in
                     guard let topLabel = observation.labels.first else { return nil }
                     let label = topLabel.identifier
@@ -115,13 +117,15 @@ class ObjectDetectionService {
                         suggestedName: CategoryMapper.suggestedName(for: label)
                     )
                 }
-                .sorted { $0.confidence > $1.confidence }
+            
+            // Deduplikasi: ambil confidence tertinggi per label unik
+            return deduplicateResults(all)
         }
         
         // Fallback: bisa juga return VNClassificationObservation
         if let classifications = request.results as? [VNClassificationObservation] {
-            return classifications
-                .prefix(5)
+            let all = classifications
+                .prefix(10)
                 .map { classification in
                     DetectionResult(
                         label: classification.identifier,
@@ -130,9 +134,27 @@ class ObjectDetectionService {
                         suggestedName: CategoryMapper.suggestedName(for: classification.identifier)
                     )
                 }
+            return deduplicateResults(Array(all))
         }
         
         return []
+    }
+    
+    /// Deduplikasi: per label unik, simpan yang confidence-nya paling tinggi
+    private func deduplicateResults(_ results: [DetectionResult]) -> [DetectionResult] {
+        var bestByLabel: [String: DetectionResult] = [:]
+        for result in results {
+            let key = result.label.lowercased()
+            if let existing = bestByLabel[key] {
+                if result.confidence > existing.confidence {
+                    bestByLabel[key] = result
+                }
+            } else {
+                bestByLabel[key] = result
+            }
+        }
+        return bestByLabel.values
+            .sorted { $0.confidence > $1.confidence }
     }
     
     /// Fallback: gunakan Vision built-in image classification jika YOLO model tidak tersedia

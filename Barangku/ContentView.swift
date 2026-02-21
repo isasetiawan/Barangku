@@ -16,6 +16,7 @@ struct ContentView: View {
     @State private var selectedCategory: Category?
     @State private var showAddItem = false
     @State private var sortNewestFirst = true
+    @State private var selectedItem: Item?
     
     /// Filtered items berdasarkan search dan kategori
     private var filteredItems: [Item] {
@@ -96,6 +97,9 @@ struct ContentView: View {
             .sheet(isPresented: $showAddItem) {
                 AddItemView()
             }
+            .sheet(item: $selectedItem) { item in
+                ItemDetailView(item: item)
+            }
         }
     }
     
@@ -168,11 +172,12 @@ struct ContentView: View {
     private var itemListView: some View {
         List {
             ForEach(filteredItems) { item in
-                NavigationLink {
-                    ItemDetailView(item: item)
+                Button {
+                    selectedItem = item
                 } label: {
                     ItemRowView(item: item)
                 }
+                .tint(.primary)
             }
             .onDelete(perform: deleteItems)
         }

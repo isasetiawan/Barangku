@@ -16,6 +16,7 @@ struct PhotoPickerView: View {
     @State private var photosPickerItem: PhotosPickerItem?
     @State private var showCamera = false
     @State private var showSourcePicker = false
+    @State private var showGallery = false
     
     var onImageSelected: ((UIImage) -> Void)?
     
@@ -76,13 +77,13 @@ struct PhotoPickerView: View {
                 showCamera = true
             }
             
-            // PhotosPicker butuh pendekatan berbeda - kita pakai inline
-            PhotosPicker(selection: $photosPickerItem, matching: .images) {
-                Text("Galeri Foto")
+            Button("Galeri Foto") {
+                showGallery = true
             }
             
             Button("Batal", role: .cancel) { }
         }
+        .photosPicker(isPresented: $showGallery, selection: $photosPickerItem, matching: .images)
         .fullScreenCover(isPresented: $showCamera) {
             CameraView(image: $selectedImage)
                 .ignoresSafeArea()
@@ -96,6 +97,10 @@ struct PhotoPickerView: View {
                         imageData = uiImage.jpegData(compressionQuality: 0.8)
                         onImageSelected?(uiImage)
                     }
+                }
+                // Reset supaya onChange bisa trigger lagi untuk foto berikutnya
+                await MainActor.run {
+                    photosPickerItem = nil
                 }
             }
         }
