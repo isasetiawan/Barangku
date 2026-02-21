@@ -47,7 +47,7 @@ struct CategoryBadgeView: View {
                 Image(systemName: category.icon)
                     .font(size.font)
             }
-            Text(category.rawValue)
+            Text(category.localizedName)
                 .font(size.font)
                 .fontWeight(.medium)
         }

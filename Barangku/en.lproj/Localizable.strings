@@ -1,0 +1,75 @@
+/* General */
+"app_title" = "Barangku";
+"search_prompt" = "Search items...";
+"sort_newest" = "Newest";
+"sort_oldest" = "Oldest";
+"view_grid" = "Grid view";
+"view_list" = "List view";
+"items_count_format" = "(%d)";
+"all_items" = "All";
+
+/* Actions */
+"add_item" = "Add Item";
+"delete" = "Delete";
+"cancel" = "Cancel";
+"save" = "Save";
+"edit" = "Edit";
+"retry_photo" = "Retake Photo";
+"fill_manual" = "Fill Manually";
+
+/* ContentView empty state */
+"empty_title" = "No Items Yet";
+"empty_subtitle" = "Add your first item by\nscanning a photo";
+"not_found_title" = "Not Found";
+"not_found_subtitle" = "Try a different keyword or category";
+
+/* Add item flow */
+"add_pick_photo_title" = "Take Photo";
+"add_detecting_title" = "Detecting...";
+"add_select_object_title" = "Select Object";
+"add_detail_title" = "Item Details";
+"pick_photo_headline" = "Take or choose an item photo";
+"pick_photo_subtitle" = "AI will detect objects in the photo\nand mark them with boxes";
+"detecting_headline" = "Detecting objects...";
+"detecting_subtitle" = "YOLO model is analyzing the photo";
+"no_detection_title" = "No Objects Detected";
+"no_detection_subtitle" = "Try a clearer photo or\nadd the item manually";
+
+/* Form fields */
+"field_name" = "Item Name";
+"field_name_placeholder" = "Enter item name";
+"field_name_placeholder_short" = "Item name";
+"field_category" = "Category";
+"field_quantity" = "Quantity";
+"field_notes" = "Notes";
+"field_added" = "Added";
+
+/* Photo picker */
+"photo_picker_headline" = "Take or choose a photo";
+"photo_picker_subtitle" = "The photo will be analyzed to detect items automatically";
+"photo_source_title" = "Choose Photo Source";
+"photo_source_camera" = "Camera";
+"photo_source_gallery" = "Photo Library";
+
+/* Detection overlay */
+"detection_header" = "Tap the object you want to add";
+"detection_title" = "Detection Results";
+
+/* Item detail */
+"edit_item_title" = "Edit Item";
+"delete_item_title" = "Delete Item";
+"delete_item_message" = "Are you sure you want to delete \"%1$@\"?";
+
+/* Categories */
+"category_electronics" = "Electronics";
+"category_clothing" = "Clothing";
+"category_kitchen" = "Kitchen";
+"category_furniture" = "Furniture";
+"category_books" = "Books";
+"category_tools" = "Tools";
+"category_sports" = "Sports";
+"category_food" = "Food";
+"category_vehicles" = "Vehicles";
+"category_animals" = "Animals";
+"category_accessories" = "Accessories";
+"category_other" = "Other";

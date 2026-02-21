@@ -52,10 +52,10 @@ struct PhotoPickerView: View {
                         Image(systemName: "camera.fill")
                             .font(.system(size: 40))
                             .foregroundStyle(.secondary)
-                        Text("Ambil atau pilih foto")
+                        Text("photo_picker_headline")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
-                        Text("Foto akan dianalisis otomatis untuk mendeteksi barang")
+                        Text("photo_picker_subtitle")
                             .font(.caption)
                             .foregroundStyle(.tertiary)
                             .multilineTextAlignment(.center)
@@ -72,16 +72,16 @@ struct PhotoPickerView: View {
                 }
             }
         }
-        .confirmationDialog("Pilih Sumber Foto", isPresented: $showSourcePicker) {
-            Button("Kamera") {
+        .confirmationDialog("photo_source_title", isPresented: $showSourcePicker) {
+            Button("photo_source_camera") {
                 showCamera = true
             }
             
-            Button("Galeri Foto") {
+            Button("photo_source_gallery") {
                 showGallery = true
             }
             
-            Button("Batal", role: .cancel) { }
+            Button("cancel", role: .cancel) { }
         }
         .photosPicker(isPresented: $showGallery, selection: $photosPickerItem, matching: .images)
         .fullScreenCover(isPresented: $showCamera) {

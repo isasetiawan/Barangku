@@ -1,0 +1,75 @@
+/* General */
+"app_title" = "Barangku";
+"search_prompt" = "Cari barang...";
+"sort_newest" = "Terbaru";
+"sort_oldest" = "Terlama";
+"view_grid" = "Tampilan grid";
+"view_list" = "Tampilan list";
+"items_count_format" = "(%d)";
+"all_items" = "Semua";
+
+/* Actions */
+"add_item" = "Tambah Barang";
+"delete" = "Hapus";
+"cancel" = "Batal";
+"save" = "Simpan";
+"edit" = "Edit";
+"retry_photo" = "Foto Ulang";
+"fill_manual" = "Isi Manual";
+
+/* ContentView empty state */
+"empty_title" = "Belum Ada Barang";
+"empty_subtitle" = "Tambahkan barang pertamamu dengan\nmengambil foto untuk deteksi otomatis";
+"not_found_title" = "Tidak Ditemukan";
+"not_found_subtitle" = "Coba kata kunci atau kategori lain";
+
+/* Add item flow */
+"add_pick_photo_title" = "Ambil Foto";
+"add_detecting_title" = "Mendeteksi...";
+"add_select_object_title" = "Pilih Objek";
+"add_detail_title" = "Detail Barang";
+"pick_photo_headline" = "Ambil atau pilih foto barang";
+"pick_photo_subtitle" = "AI akan mendeteksi objek dalam foto\ndan menandainya dengan kotak";
+"detecting_headline" = "Mendeteksi objek...";
+"detecting_subtitle" = "Model YOLO sedang menganalisis foto";
+"no_detection_title" = "Tidak Ada Objek Terdeteksi";
+"no_detection_subtitle" = "Coba foto yang lebih jelas atau\ntambahkan barang secara manual";
+
+/* Form fields */
+"field_name" = "Nama Barang";
+"field_name_placeholder" = "Masukkan nama barang";
+"field_name_placeholder_short" = "Nama barang";
+"field_category" = "Kategori";
+"field_quantity" = "Jumlah";
+"field_notes" = "Catatan";
+"field_added" = "Ditambahkan";
+
+/* Photo picker */
+"photo_picker_headline" = "Ambil atau pilih foto";
+"photo_picker_subtitle" = "Foto akan dianalisis otomatis untuk mendeteksi barang";
+"photo_source_title" = "Pilih Sumber Foto";
+"photo_source_camera" = "Kamera";
+"photo_source_gallery" = "Galeri Foto";
+
+/* Detection overlay */
+"detection_header" = "Ketuk objek yang ingin ditambahkan";
+"detection_title" = "Hasil Deteksi";
+
+/* Item detail */
+"edit_item_title" = "Edit Barang";
+"delete_item_title" = "Hapus Barang";
+"delete_item_message" = "Apakah kamu yakin ingin menghapus \"%1$@\"?";
+
+/* Categories */
+"category_electronics" = "Elektronik";
+"category_clothing" = "Pakaian";
+"category_kitchen" = "Dapur";
+"category_furniture" = "Furnitur";
+"category_books" = "Buku";
+"category_tools" = "Alat";
+"category_sports" = "Olahraga";
+"category_food" = "Makanan";
+"category_vehicles" = "Kendaraan";
+"category_animals" = "Hewan";
+"category_accessories" = "Aksesoris";
+"category_other" = "Lainnya";

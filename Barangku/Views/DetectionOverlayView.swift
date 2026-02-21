@@ -19,7 +19,7 @@ struct DetectionOverlayView: View {
     var body: some View {
         VStack(spacing: 0) {
             // Header instruksi
-            Text("Ketuk objek yang ingin ditambahkan")
+            Text("detection_header")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .padding(.vertical, 10)
@@ -85,7 +85,7 @@ struct DetectionOverlayView: View {
                     resultsList
                 }
             }
-            .navigationTitle("Hasil Deteksi")
+            .navigationTitle("detection_title")
             .navigationBarTitleDisplayMode(.inline)
     }
     

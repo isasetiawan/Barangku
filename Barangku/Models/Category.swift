@@ -24,6 +24,23 @@ enum Category: String, CaseIterable, Codable, Identifiable {
     
     var id: String { rawValue }
     
+    var localizedName: String {
+        switch self {
+        case .electronics: return String(localized: "category_electronics")
+        case .clothing: return String(localized: "category_clothing")
+        case .kitchen: return String(localized: "category_kitchen")
+        case .furniture: return String(localized: "category_furniture")
+        case .books: return String(localized: "category_books")
+        case .tools: return String(localized: "category_tools")
+        case .sports: return String(localized: "category_sports")
+        case .food: return String(localized: "category_food")
+        case .vehicles: return String(localized: "category_vehicles")
+        case .animals: return String(localized: "category_animals")
+        case .accessories: return String(localized: "category_accessories")
+        case .other: return String(localized: "category_other")
+        }
+    }
+    
     /// Ikon SF Symbol untuk tiap kategori
     var icon: String {
         switch self {

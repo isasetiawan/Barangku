@@ -42,6 +42,7 @@ struct ContentView: View {
             result = result.filter {
                 $0.name.localizedCaseInsensitiveContains(searchText) ||
                 $0.notes.localizedCaseInsensitiveContains(searchText) ||
+                $0.category.localizedName.localizedCaseInsensitiveContains(searchText) ||
                 $0.category.rawValue.localizedCaseInsensitiveContains(searchText)
             }
         }
@@ -84,8 +85,8 @@ struct ContentView: View {
                     }
                 }
             }
-            .navigationTitle("Barangku")
-            .searchable(text: $searchText, prompt: "Cari barang...")
+            .navigationTitle(Text("app_title"))
+            .searchable(text: $searchText, prompt: Text("search_prompt"))
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button {
@@ -102,12 +103,12 @@ struct ContentView: View {
                             Button {
                                 withAnimation { sortNewestFirst = true }
                             } label: {
-                                Label("Terbaru", systemImage: sortNewestFirst ? "checkmark" : "")
+                                Label("sort_newest", systemImage: sortNewestFirst ? "checkmark" : "")
                             }
                             Button {
                                 withAnimation { sortNewestFirst = false }
                             } label: {
-                                Label("Terlama", systemImage: !sortNewestFirst ? "checkmark" : "")
+                                Label("sort_oldest", systemImage: !sortNewestFirst ? "checkmark" : "")
                             }
                         } label: {
                             Image(systemName: "arrow.up.arrow.down")
@@ -124,7 +125,7 @@ struct ContentView: View {
                         } label: {
                             Image(systemName: viewMode == .list ? "square.grid.2x2" : "list.bullet")
                         }
-                        .accessibilityLabel(viewMode == .list ? "Tampilan grid" : "Tampilan list")
+                        .accessibilityLabel(Text(viewMode == .list ? "view_grid" : "view_list"))
                     }
                 }
             }
@@ -151,10 +152,10 @@ struct ContentView: View {
                     HStack(spacing: 4) {
                         Image(systemName: "tray.full")
                             .font(.caption)
-                        Text("Semua")
+                        Text("all_items")
                             .font(.caption)
                             .fontWeight(.medium)
-                        Text("(\(items.count))")
+                        Text(String(format: String(localized: "items_count_format"), items.count))
                             .font(.caption2)
                     }
                     .padding(.horizontal, 12)
@@ -178,10 +179,10 @@ struct ContentView: View {
                         HStack(spacing: 4) {
                             Image(systemName: category.icon)
                                 .font(.caption)
-                            Text(category.rawValue)
+                            Text(category.localizedName)
                                 .font(.caption)
                                 .fontWeight(.medium)
-                            Text("(\(categoryCounts[category] ?? 0))")
+                            Text(String(format: String(localized: "items_count_format"), categoryCounts[category] ?? 0))
                                 .font(.caption2)
                         }
                         .padding(.horizontal, 12)
@@ -232,7 +233,7 @@ struct ContentView: View {
                         Button(role: .destructive) {
                             deleteItem(item)
                         } label: {
-                            Label("Hapus", systemImage: "trash")
+                            Label("delete", systemImage: "trash")
                         }
                     }
                 }
@@ -253,10 +254,10 @@ struct ContentView: View {
                 Image(systemName: "shippingbox")
                     .font(.system(size: 60))
                     .foregroundStyle(.secondary)
-                Text("Belum Ada Barang")
+                Text("empty_title")
                     .font(.title3)
                     .fontWeight(.semibold)
-                Text("Tambahkan barang pertamamu dengan\nmengambil foto untuk deteksi otomatis")
+                Text("empty_subtitle")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -264,7 +265,7 @@ struct ContentView: View {
                 Button {
                     showAddItem = true
                 } label: {
-                    Label("Tambah Barang", systemImage: "plus")
+                    Label("add_item", systemImage: "plus")
                         .fontWeight(.semibold)
                         .padding(.horizontal, 24)
                         .padding(.vertical, 12)
@@ -276,10 +277,10 @@ struct ContentView: View {
                 Image(systemName: "magnifyingglass")
                     .font(.system(size: 40))
                     .foregroundStyle(.secondary)
-                Text("Tidak Ditemukan")
+                Text("not_found_title")
                     .font(.title3)
                     .fontWeight(.semibold)
-                Text("Coba kata kunci atau kategori lain")
+                Text("not_found_subtitle")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }

@@ -42,17 +42,17 @@ struct ItemDetailView: View {
                 }
                 .padding()
             }
-            .navigationTitle(isEditing ? "Edit Barang" : item.name)
+            .navigationTitle(isEditing ? Text("edit_item_title") : Text(item.name))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 if isEditing {
                     ToolbarItem(placement: .cancellationAction) {
-                        Button("Batal") {
+                        Button("cancel") {
                             cancelEditing()
                         }
                     }
                     ToolbarItem(placement: .confirmationAction) {
-                        Button("Simpan") {
+                        Button("save") {
                             saveEdits()
                         }
                         .fontWeight(.semibold)
@@ -69,11 +69,11 @@ struct ItemDetailView: View {
                     }
                 }
             }
-            .alert("Hapus Barang", isPresented: $showDeleteConfirmation) {
-                Button("Hapus", role: .destructive) { deleteItem() }
-                Button("Batal", role: .cancel) { }
+            .alert("delete_item_title", isPresented: $showDeleteConfirmation) {
+                Button("delete", role: .destructive) { deleteItem() }
+                Button("cancel", role: .cancel) { }
             } message: {
-                Text("Apakah kamu yakin ingin menghapus \"\(item.name)\"?")
+                Text(String(format: String(localized: "delete_item_message"), item.name))
             }
         }
     }
@@ -135,7 +135,7 @@ struct ItemDetailView: View {
             
             // Jumlah
             HStack {
-                Label("Jumlah", systemImage: "number")
+                Label("field_quantity", systemImage: "number")
                     .foregroundStyle(.secondary)
                 Spacer()
                 Text("\(item.quantity)")
@@ -146,7 +146,7 @@ struct ItemDetailView: View {
             
             // Tanggal
             HStack {
-                Label("Ditambahkan", systemImage: "calendar")
+                Label("field_added", systemImage: "calendar")
                     .foregroundStyle(.secondary)
                 Spacer()
                 Text(item.createdAt, style: .date)
@@ -157,7 +157,7 @@ struct ItemDetailView: View {
             if !item.notes.isEmpty {
                 Divider()
                 VStack(alignment: .leading, spacing: 6) {
-                    Label("Catatan", systemImage: "note.text")
+                    Label("field_notes", systemImage: "note.text")
                         .foregroundStyle(.secondary)
                     Text(item.notes)
                         .font(.body)
@@ -174,15 +174,15 @@ struct ItemDetailView: View {
         VStack(spacing: 16) {
             // Nama
             VStack(alignment: .leading, spacing: 6) {
-                Label("Nama Barang", systemImage: "tag")
+                Label("field_name", systemImage: "tag")
                     .font(.headline)
-                TextField("Nama barang", text: $editName)
+                TextField(String(localized: "field_name_placeholder_short"), text: $editName)
                     .textFieldStyle(.roundedBorder)
             }
             
             // Kategori
             VStack(alignment: .leading, spacing: 6) {
-                Label("Kategori", systemImage: "square.grid.2x2")
+                Label("field_category", systemImage: "square.grid.2x2")
                     .font(.headline)
                 
                 ScrollView(.horizontal, showsIndicators: false) {
@@ -203,7 +203,7 @@ struct ItemDetailView: View {
             
             // Jumlah
             VStack(alignment: .leading, spacing: 6) {
-                Label("Jumlah", systemImage: "number")
+                Label("field_quantity", systemImage: "number")
                     .font(.headline)
                 HStack {
                     Button {
@@ -233,7 +233,7 @@ struct ItemDetailView: View {
             
             // Catatan
             VStack(alignment: .leading, spacing: 6) {
-                Label("Catatan", systemImage: "note.text")
+                Label("field_notes", systemImage: "note.text")
                     .font(.headline)
                 TextEditor(text: $editNotes)
                     .frame(minHeight: 80)
@@ -255,7 +255,7 @@ struct ItemDetailView: View {
             Button {
                 startEditing()
             } label: {
-                Label("Edit", systemImage: "pencil")
+                Label("edit", systemImage: "pencil")
                     .frame(maxWidth: .infinity)
                     .padding()
                     .background(Color.accentColor.opacity(0.1))
@@ -266,7 +266,7 @@ struct ItemDetailView: View {
             Button {
                 showDeleteConfirmation = true
             } label: {
-                Label("Hapus", systemImage: "trash")
+                Label("delete", systemImage: "trash")
                     .frame(maxWidth: .infinity)
                     .padding()
                     .background(Color.red.opacity(0.1))

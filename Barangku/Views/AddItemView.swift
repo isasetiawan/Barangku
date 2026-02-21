@@ -55,12 +55,12 @@ struct AddItemView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Batal") { dismiss() }
+                    Button("cancel") { dismiss() }
                 }
                 
                 if step == .fillForm {
                     ToolbarItem(placement: .confirmationAction) {
-                        Button("Simpan") { saveItem() }
+                        Button("save") { saveItem() }
                             .fontWeight(.semibold)
                             .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
                     }
@@ -70,12 +70,12 @@ struct AddItemView: View {
         }
     }
     
-    private var navigationTitle: String {
+    private var navigationTitle: LocalizedStringKey {
         switch step {
-        case .pickPhoto: return "Ambil Foto"
-        case .detecting: return "Mendeteksi..."
-        case .selectObject: return "Pilih Objek"
-        case .fillForm: return "Detail Barang"
+        case .pickPhoto: return "add_pick_photo_title"
+        case .detecting: return "add_detecting_title"
+        case .selectObject: return "add_select_object_title"
+        case .fillForm: return "add_detail_title"
         }
     }
     
@@ -89,11 +89,11 @@ struct AddItemView: View {
                 .font(.system(size: 64))
                 .foregroundStyle(Color.accentColor)
             
-            Text("Ambil atau pilih foto barang")
+            Text("pick_photo_headline")
                 .font(.title3)
                 .fontWeight(.semibold)
             
-            Text("AI akan mendeteksi objek dalam foto\ndan menandainya dengan kotak")
+            Text("pick_photo_subtitle")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -134,9 +134,9 @@ struct AddItemView: View {
             VStack(spacing: 12) {
                 ProgressView()
                     .scaleEffect(1.2)
-                Text("Mendeteksi objek...")
+                Text("detecting_headline")
                     .font(.headline)
-                Text("Model YOLO sedang menganalisis foto")
+                Text("detecting_subtitle")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
@@ -175,11 +175,11 @@ struct AddItemView: View {
                 .font(.system(size: 48))
                 .foregroundStyle(.secondary)
             
-            Text("Tidak Ada Objek Terdeteksi")
+            Text("no_detection_title")
                 .font(.title3)
                 .fontWeight(.semibold)
             
-            Text("Coba foto yang lebih jelas atau\ntambahkan barang secara manual")
+            Text("no_detection_subtitle")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -192,7 +192,7 @@ struct AddItemView: View {
                         imageData = nil
                     }
                 } label: {
-                    Label("Foto Ulang", systemImage: "camera")
+                    Label("retry_photo", systemImage: "camera")
                         .frame(maxWidth: .infinity)
                         .padding()
                         .background(Color(.systemGray6))
@@ -202,7 +202,7 @@ struct AddItemView: View {
                 Button {
                     withAnimation { step = .fillForm }
                 } label: {
-                    Label("Isi Manual", systemImage: "pencil")
+                    Label("fill_manual", systemImage: "pencil")
                         .frame(maxWidth: .infinity)
                         .padding()
                         .background(Color.accentColor.opacity(0.1))
@@ -243,15 +243,15 @@ struct AddItemView: View {
         VStack(spacing: 16) {
             // Nama
             VStack(alignment: .leading, spacing: 6) {
-                Label("Nama Barang", systemImage: "tag")
+                Label("field_name", systemImage: "tag")
                     .font(.headline)
-                TextField("Masukkan nama barang", text: $name)
+                TextField(String(localized: "field_name_placeholder"), text: $name)
                     .textFieldStyle(.roundedBorder)
             }
             
             // Kategori
             VStack(alignment: .leading, spacing: 6) {
-                Label("Kategori", systemImage: "square.grid.2x2")
+                Label("field_category", systemImage: "square.grid.2x2")
                     .font(.headline)
                 
                 ScrollView(.horizontal, showsIndicators: false) {
@@ -272,7 +272,7 @@ struct AddItemView: View {
             
             // Jumlah
             VStack(alignment: .leading, spacing: 6) {
-                Label("Jumlah", systemImage: "number")
+                Label("field_quantity", systemImage: "number")
                     .font(.headline)
                 
                 HStack {
@@ -305,7 +305,7 @@ struct AddItemView: View {
             
             // Catatan
             VStack(alignment: .leading, spacing: 6) {
-                Label("Catatan", systemImage: "note.text")
+                Label("field_notes", systemImage: "note.text")
                     .font(.headline)
                 TextEditor(text: $notes)
                     .frame(minHeight: 80)
@@ -378,7 +378,7 @@ struct CategoryChip: View {
             HStack(spacing: 4) {
                 Image(systemName: category.icon)
                     .font(.caption)
-                Text(category.rawValue)
+                Text(category.localizedName)
                     .font(.caption)
                     .fontWeight(.medium)
             }
