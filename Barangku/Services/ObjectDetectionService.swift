@@ -17,6 +17,8 @@ struct DetectionResult: Identifiable {
     let confidence: Float
     let category: Category
     let suggestedName: String
+    /// Bounding box dalam koordinat Vision (origin di bottom-left, normalized 0..1)
+    let boundingBox: CGRect
 }
 
 /// Service untuk menjalankan YOLO object detection via CoreML + Vision
@@ -106,7 +108,7 @@ class ObjectDetectionService {
     private func processYOLOResults(request: VNRequest) -> [DetectionResult] {
         // YOLO returns VNRecognizedObjectObservation
         if let observations = request.results as? [VNRecognizedObjectObservation] {
-            let all = observations
+            return observations
                 .compactMap { observation -> DetectionResult? in
                     guard let topLabel = observation.labels.first else { return nil }
                     let label = topLabel.identifier
@@ -114,47 +116,30 @@ class ObjectDetectionService {
                         label: label,
                         confidence: topLabel.confidence,
                         category: CategoryMapper.map(label: label),
-                        suggestedName: CategoryMapper.suggestedName(for: label)
+                        suggestedName: CategoryMapper.suggestedName(for: label),
+                        boundingBox: observation.boundingBox
                     )
                 }
-            
-            // Deduplikasi: ambil confidence tertinggi per label unik
-            return deduplicateResults(all)
+                .sorted { $0.confidence > $1.confidence }
         }
         
-        // Fallback: bisa juga return VNClassificationObservation
+        // Fallback: VNClassificationObservation (no bounding box)
         if let classifications = request.results as? [VNClassificationObservation] {
-            let all = classifications
-                .prefix(10)
+            return classifications
+                .filter { $0.confidence > 0.1 }
+                .prefix(5)
                 .map { classification in
                     DetectionResult(
                         label: classification.identifier,
                         confidence: classification.confidence,
                         category: CategoryMapper.map(label: classification.identifier),
-                        suggestedName: CategoryMapper.suggestedName(for: classification.identifier)
+                        suggestedName: CategoryMapper.suggestedName(for: classification.identifier),
+                        boundingBox: CGRect(x: 0, y: 0, width: 1, height: 1)
                     )
                 }
-            return deduplicateResults(Array(all))
         }
         
         return []
-    }
-    
-    /// Deduplikasi: per label unik, simpan yang confidence-nya paling tinggi
-    private func deduplicateResults(_ results: [DetectionResult]) -> [DetectionResult] {
-        var bestByLabel: [String: DetectionResult] = [:]
-        for result in results {
-            let key = result.label.lowercased()
-            if let existing = bestByLabel[key] {
-                if result.confidence > existing.confidence {
-                    bestByLabel[key] = result
-                }
-            } else {
-                bestByLabel[key] = result
-            }
-        }
-        return bestByLabel.values
-            .sorted { $0.confidence > $1.confidence }
     }
     
     /// Fallback: gunakan Vision built-in image classification jika YOLO model tidak tersedia
@@ -179,7 +164,8 @@ class ObjectDetectionService {
                             label: classification.identifier,
                             confidence: classification.confidence,
                             category: CategoryMapper.map(label: classification.identifier),
-                            suggestedName: CategoryMapper.suggestedName(for: classification.identifier)
+                            suggestedName: CategoryMapper.suggestedName(for: classification.identifier),
+                            boundingBox: CGRect(x: 0, y: 0, width: 1, height: 1)
                         )
                     }
                 

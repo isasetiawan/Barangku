@@ -8,160 +8,233 @@
 import SwiftUI
 import SwiftData
 
+// MARK: - Flow Steps
+
+private enum AddItemStep {
+    case pickPhoto
+    case detecting
+    case selectObject
+    case fillForm
+}
+
 struct AddItemView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     
-    @State private var name = ""
-    @State private var selectedCategory: Category = .other
-    @State private var quantity = 1
-    @State private var notes = ""
+    // Flow
+    @State private var step: AddItemStep = .pickPhoto
+    
+    // Photo
     @State private var selectedImage: UIImage?
     @State private var imageData: Data?
     
     // Detection
     @State private var detectionService = ObjectDetectionService()
-    @State private var showDetectionResults = false
-    @State private var hasAutoFilled = false
+    
+    // Form (pre-filled setelah user pilih box)
+    @State private var name = ""
+    @State private var selectedCategory: Category = .other
+    @State private var quantity = 1
+    @State private var notes = ""
     
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 20) {
-                    // MARK: - Foto Section
-                    photoSection
-                    
-                    // MARK: - Detection Results
-                    if detectionService.isProcessing {
-                        detectionLoadingView
-                    } else if !detectionService.detectionResults.isEmpty && showDetectionResults {
-                        detectionResultsView
-                    }
-                    
-                    // MARK: - Form Fields
-                    formSection
+            Group {
+                switch step {
+                case .pickPhoto:
+                    pickPhotoStep
+                case .detecting:
+                    detectingStep
+                case .selectObject:
+                    selectObjectStep
+                case .fillForm:
+                    fillFormStep
                 }
-                .padding()
             }
-            .navigationTitle("Tambah Barang")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationTitle(navigationTitle)
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Batal") { dismiss() }
                 }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Simpan") { saveItem() }
-                        .fontWeight(.semibold)
-                        .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
+                
+                if step == .fillForm {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Simpan") { saveItem() }
+                            .fontWeight(.semibold)
+                            .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
+                    }
                 }
             }
-            .onAppear {
-                resetForm()
-            }
+            .onAppear { resetForm() }
         }
     }
     
-    // MARK: - Photo Section
+    private var navigationTitle: String {
+        switch step {
+        case .pickPhoto: return "Ambil Foto"
+        case .detecting: return "Mendeteksi..."
+        case .selectObject: return "Pilih Objek"
+        case .fillForm: return "Detail Barang"
+        }
+    }
     
-    private var photoSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Label("Foto Barang", systemImage: "photo")
-                .font(.headline)
+    // MARK: - Step 1: Pick Photo
+    
+    private var pickPhotoStep: some View {
+        VStack(spacing: 20) {
+            Spacer()
+            
+            Image(systemName: "camera.viewfinder")
+                .font(.system(size: 64))
+                .foregroundStyle(Color.accentColor)
+            
+            Text("Ambil atau pilih foto barang")
+                .font(.title3)
+                .fontWeight(.semibold)
+            
+            Text("AI akan mendeteksi objek dalam foto\ndan menandainya dengan kotak")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+            
+            Spacer()
             
             PhotoPickerView(
                 selectedImage: $selectedImage,
                 imageData: $imageData
             ) { image in
-                runDetection(on: image)
+                startDetection(on: image)
+            }
+            .padding(.horizontal)
+            
+            Spacer()
+        }
+        .padding()
+    }
+    
+    // MARK: - Step 2: Detecting (loading)
+    
+    private var detectingStep: some View {
+        VStack(spacing: 24) {
+            Spacer()
+            
+            if let image = selectedImage {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(maxHeight: 300)
+                    .clipShape(RoundedRectangle(cornerRadius: 16))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16)
+                            .stroke(.ultraThinMaterial, lineWidth: 2)
+                    )
+            }
+            
+            VStack(spacing: 12) {
+                ProgressView()
+                    .scaleEffect(1.2)
+                Text("Mendeteksi objek...")
+                    .font(.headline)
+                Text("Model YOLO sedang menganalisis foto")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+            
+            Spacer()
+        }
+        .padding()
+    }
+    
+    // MARK: - Step 3: Select Object (overlay with boxes)
+    
+    private var selectObjectStep: some View {
+        Group {
+            if let image = selectedImage {
+                if detectionService.detectionResults.isEmpty {
+                    // Tidak ada objek terdeteksi
+                    noDetectionView
+                } else {
+                    DetectionOverlayView(
+                        image: image,
+                        results: detectionService.detectionResults,
+                        onSelect: { result in
+                            applyDetectionResult(result)
+                        }
+                    )
+                }
             }
         }
     }
     
-    // MARK: - Detection Loading
-    
-    private var detectionLoadingView: some View {
-        HStack(spacing: 12) {
-            ProgressView()
-            Text("Mendeteksi objek...")
+    private var noDetectionView: some View {
+        VStack(spacing: 20) {
+            Spacer()
+            
+            Image(systemName: "eye.slash")
+                .font(.system(size: 48))
+                .foregroundStyle(.secondary)
+            
+            Text("Tidak Ada Objek Terdeteksi")
+                .font(.title3)
+                .fontWeight(.semibold)
+            
+            Text("Coba foto yang lebih jelas atau\ntambahkan barang secara manual")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+            
+            HStack(spacing: 12) {
+                Button {
+                    withAnimation {
+                        step = .pickPhoto
+                        selectedImage = nil
+                        imageData = nil
+                    }
+                } label: {
+                    Label("Foto Ulang", systemImage: "camera")
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color(.systemGray6))
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                }
+                
+                Button {
+                    withAnimation { step = .fillForm }
+                } label: {
+                    Label("Isi Manual", systemImage: "pencil")
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.accentColor.opacity(0.1))
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                }
+                .tint(Color.accentColor)
+            }
+            
+            Spacer()
         }
-        .frame(maxWidth: .infinity)
         .padding()
-        .background(Color(.systemGray6))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
     }
     
-    // MARK: - Detection Results
+    // MARK: - Step 4: Fill Form
     
-    private var detectionResultsView: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Image(systemName: "sparkles")
-                    .foregroundStyle(.yellow)
-                Text("Hasil Deteksi AI")
-                    .font(.headline)
-                Spacer()
-                Button {
-                    withAnimation { showDetectionResults = false }
-                } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundStyle(.secondary)
+    private var fillFormStep: some View {
+        ScrollView {
+            VStack(spacing: 20) {
+                // Thumbnail foto
+                if let image = selectedImage {
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(height: 180)
+                        .clipShape(RoundedRectangle(cornerRadius: 16))
                 }
+                
+                // Form fields
+                formSection
             }
-            
-            ForEach(detectionService.detectionResults.prefix(5)) { result in
-                Button {
-                    applyDetectionResult(result)
-                } label: {
-                    HStack {
-                        Image(systemName: result.category.icon)
-                            .foregroundStyle(result.category.color)
-                            .frame(width: 28)
-                        
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(result.suggestedName)
-                                .font(.subheadline)
-                                .fontWeight(.medium)
-                            HStack(spacing: 4) {
-                                Text(result.category.rawValue)
-                                Text("·")
-                                Text(result.label)
-                                    .italic()
-                            }
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        }
-                        
-                        Spacer()
-                        
-                        Text("\(Int(result.confidence * 100))%")
-                            .font(.caption)
-                            .fontWeight(.semibold)
-                            .foregroundStyle(.secondary)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(Color(.systemGray5))
-                            .clipShape(Capsule())
-                        
-                        Image(systemName: "chevron.right")
-                            .font(.caption)
-                            .foregroundStyle(.tertiary)
-                    }
-                    .padding(.vertical, 6)
-                }
-                .tint(.primary)
-            }
-            
-            if !hasAutoFilled {
-                Text("Ketuk hasil untuk mengisi nama & kategori otomatis")
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
-            }
+            .padding()
         }
-        .padding()
-        .background(Color(.systemGray6))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
     }
     
     // MARK: - Form Section
@@ -249,27 +322,20 @@ struct AddItemView: View {
     
     // MARK: - Actions
     
-    private func runDetection(on image: UIImage) {
+    private func startDetection(on image: UIImage) {
+        withAnimation { step = .detecting }
         Task {
             await detectionService.detect(image: image)
-            
             await MainActor.run {
-                showDetectionResults = true
-                
-                // Auto-fill dari top result
-                if let top = detectionService.topResult, !hasAutoFilled {
-                    applyDetectionResult(top)
-                }
+                withAnimation { step = .selectObject }
             }
         }
     }
     
     private func applyDetectionResult(_ result: DetectionResult) {
-        withAnimation {
-            name = result.suggestedName
-            selectedCategory = result.category
-            hasAutoFilled = true
-        }
+        name = result.suggestedName
+        selectedCategory = result.category
+        withAnimation { step = .fillForm }
     }
     
     private func saveItem() {
@@ -289,6 +355,7 @@ struct AddItemView: View {
     }
     
     private func resetForm() {
+        step = .pickPhoto
         name = ""
         selectedCategory = .other
         quantity = 1
@@ -296,8 +363,6 @@ struct AddItemView: View {
         selectedImage = nil
         imageData = nil
         detectionService = ObjectDetectionService()
-        showDetectionResults = false
-        hasAutoFilled = false
     }
 }
 
