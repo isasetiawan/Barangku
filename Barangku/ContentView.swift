@@ -10,48 +10,284 @@ import SwiftData
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query private var items: [Item]
-
+    @Query(sort: \Item.createdAt, order: .reverse) private var items: [Item]
+    
+    @State private var searchText = ""
+    @State private var selectedCategory: Category?
+    @State private var showAddItem = false
+    @State private var sortNewestFirst = true
+    
+    /// Filtered items berdasarkan search dan kategori
+    private var filteredItems: [Item] {
+        var result = items
+        
+        // Filter by category
+        if let category = selectedCategory {
+            result = result.filter { $0.category == category }
+        }
+        
+        // Filter by search text
+        if !searchText.isEmpty {
+            result = result.filter {
+                $0.name.localizedCaseInsensitiveContains(searchText) ||
+                $0.notes.localizedCaseInsensitiveContains(searchText) ||
+                $0.category.rawValue.localizedCaseInsensitiveContains(searchText)
+            }
+        }
+        
+        return result
+    }
+    
+    /// Hitung jumlah item per kategori
+    private var categoryCounts: [Category: Int] {
+        var counts: [Category: Int] = [:]
+        for item in items {
+            counts[item.category, default: 0] += 1
+        }
+        return counts
+    }
+    
     var body: some View {
-        NavigationSplitView {
-            List {
-                ForEach(items) { item in
-                    NavigationLink {
-                        Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
-                    } label: {
-                        Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
-                    }
+        NavigationStack {
+            VStack(spacing: 0) {
+                // MARK: - Category Filter
+                if !items.isEmpty {
+                    categoryFilterBar
                 }
-                .onDelete(perform: deleteItems)
+                
+                // MARK: - Item List
+                if filteredItems.isEmpty {
+                    emptyStateView
+                } else {
+                    itemListView
+                }
             }
+            .navigationTitle("Barangku")
+            .searchable(text: $searchText, prompt: "Cari barang...")
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        showAddItem = true
+                    } label: {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.title3)
+                    }
                 }
-                ToolbarItem {
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
+                
+                ToolbarItem(placement: .topBarLeading) {
+                    if !items.isEmpty {
+                        Menu {
+                            Button {
+                                withAnimation { sortNewestFirst = true }
+                            } label: {
+                                Label("Terbaru", systemImage: sortNewestFirst ? "checkmark" : "")
+                            }
+                            Button {
+                                withAnimation { sortNewestFirst = false }
+                            } label: {
+                                Label("Terlama", systemImage: !sortNewestFirst ? "checkmark" : "")
+                            }
+                        } label: {
+                            Image(systemName: "arrow.up.arrow.down")
+                        }
                     }
                 }
             }
-        } detail: {
-            Text("Select an item")
+            .sheet(isPresented: $showAddItem) {
+                AddItemView()
+            }
         }
     }
-
-    private func addItem() {
-        withAnimation {
-            let newItem = Item(timestamp: Date())
-            modelContext.insert(newItem)
+    
+    // MARK: - Category Filter Bar
+    
+    private var categoryFilterBar: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                // "Semua" chip
+                Button {
+                    withAnimation(.spring(duration: 0.2)) {
+                        selectedCategory = nil
+                    }
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "tray.full")
+                            .font(.caption)
+                        Text("Semua")
+                            .font(.caption)
+                            .fontWeight(.medium)
+                        Text("(\(items.count))")
+                            .font(.caption2)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(selectedCategory == nil ? Color.accentColor.opacity(0.2) : Color(.systemGray6))
+                    .foregroundStyle(selectedCategory == nil ? Color.accentColor : Color.secondary)
+                    .clipShape(Capsule())
+                    .overlay(
+                        Capsule()
+                            .stroke(selectedCategory == nil ? Color.accentColor : .clear, lineWidth: 1.5)
+                    )
+                }
+                
+                // Category chips
+                ForEach(Category.allCases.filter { categoryCounts[$0] ?? 0 > 0 }) { category in
+                    Button {
+                        withAnimation(.spring(duration: 0.2)) {
+                            selectedCategory = selectedCategory == category ? nil : category
+                        }
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: category.icon)
+                                .font(.caption)
+                            Text(category.rawValue)
+                                .font(.caption)
+                                .fontWeight(.medium)
+                            Text("(\(categoryCounts[category] ?? 0))")
+                                .font(.caption2)
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(selectedCategory == category ? category.color.opacity(0.2) : Color(.systemGray6))
+                        .foregroundStyle(selectedCategory == category ? category.color : .secondary)
+                        .clipShape(Capsule())
+                        .overlay(
+                            Capsule()
+                                .stroke(selectedCategory == category ? category.color : .clear, lineWidth: 1.5)
+                        )
+                    }
+                }
+            }
+            .padding(.horizontal)
+            .padding(.vertical, 8)
         }
     }
-
+    
+    // MARK: - Item List
+    
+    private var itemListView: some View {
+        List {
+            ForEach(filteredItems) { item in
+                NavigationLink {
+                    ItemDetailView(item: item)
+                } label: {
+                    ItemRowView(item: item)
+                }
+            }
+            .onDelete(perform: deleteItems)
+        }
+        .listStyle(.plain)
+    }
+    
+    // MARK: - Empty State
+    
+    private var emptyStateView: some View {
+        VStack(spacing: 16) {
+            Spacer()
+            
+            if items.isEmpty {
+                // Belum ada barang sama sekali
+                Image(systemName: "shippingbox")
+                    .font(.system(size: 60))
+                    .foregroundStyle(.secondary)
+                Text("Belum Ada Barang")
+                    .font(.title3)
+                    .fontWeight(.semibold)
+                Text("Tambahkan barang pertamamu dengan\nmengambil foto untuk deteksi otomatis")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                
+                Button {
+                    showAddItem = true
+                } label: {
+                    Label("Tambah Barang", systemImage: "plus")
+                        .fontWeight(.semibold)
+                        .padding(.horizontal, 24)
+                        .padding(.vertical, 12)
+                }
+                .buttonStyle(.borderedProminent)
+                .padding(.top, 8)
+            } else {
+                // Ada barang tapi filter tidak ada hasil
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 40))
+                    .foregroundStyle(.secondary)
+                Text("Tidak Ditemukan")
+                    .font(.title3)
+                    .fontWeight(.semibold)
+                Text("Coba kata kunci atau kategori lain")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+            
+            Spacer()
+        }
+        .frame(maxWidth: .infinity)
+    }
+    
+    // MARK: - Actions
+    
     private func deleteItems(offsets: IndexSet) {
         withAnimation {
-            for index in offsets {
-                modelContext.delete(items[index])
+            let itemsToDelete = offsets.map { filteredItems[$0] }
+            for item in itemsToDelete {
+                modelContext.delete(item)
             }
         }
+    }
+}
+
+// MARK: - Item Row View
+
+struct ItemRowView: View {
+    let item: Item
+    
+    var body: some View {
+        HStack(spacing: 14) {
+            // Thumbnail
+            Group {
+                if let data = item.photoData, let uiImage = UIImage(data: data) {
+                    Image(uiImage: uiImage)
+                        .resizable()
+                        .scaledToFill()
+                } else {
+                    Image(systemName: item.category.icon)
+                        .font(.title3)
+                        .foregroundStyle(item.category.color)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background(item.category.color.opacity(0.1))
+                }
+            }
+            .frame(width: 56, height: 56)
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+            
+            // Info
+            VStack(alignment: .leading, spacing: 4) {
+                Text(item.name)
+                    .font(.body)
+                    .fontWeight(.medium)
+                    .lineLimit(1)
+                
+                HStack(spacing: 8) {
+                    CategoryBadgeView(category: item.category, showIcon: false, size: .small)
+                    
+                    if item.quantity > 1 {
+                        Text("×\(item.quantity)")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+            
+            Spacer()
+            
+            // Date
+            Text(item.createdAt, style: .date)
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
+        }
+        .padding(.vertical, 4)
     }
 }
 
