@@ -42,7 +42,7 @@ class ObjectDetectionService {
             self.errorMessage = nil
             self.detectionResults = []
         }
-        
+
         guard let ciImage = CIImage(image: image) else {
             await MainActor.run {
                 self.errorMessage = "Gagal memproses gambar"
@@ -50,9 +50,9 @@ class ObjectDetectionService {
             }
             return
         }
-        
+
         do {
-            let results = try await performDetection(on: ciImage)
+            let results = try await performDetection(on: ciImage, orientation: image.cgImageOrientation)
             await MainActor.run {
                 self.detectionResults = results
                 self.isProcessing = false
@@ -64,29 +64,26 @@ class ObjectDetectionService {
             }
         }
     }
-    
-    private func performDetection(on image: CIImage) async throws -> [DetectionResult] {
-        // Coba load YOLOv3TinyInt8LUT model (dari Apple ML Models)
-        // Jika tidak ada, gunakan fallback classifier
+
+    private func performDetection(on image: CIImage, orientation: CGImagePropertyOrientation) async throws -> [DetectionResult] {
         guard let model = try? loadYOLOModel() else {
-            // Fallback: gunakan Vision built-in classifier
-            return try await fallbackClassification(on: image)
+            return try await fallbackClassification(on: image, orientation: orientation)
         }
-        
+
         return try await withCheckedThrowingContinuation { continuation in
             let request = VNCoreMLRequest(model: model) { request, error in
                 if let error = error {
                     continuation.resume(throwing: error)
                     return
                 }
-                
+
                 let results = self.processYOLOResults(request: request)
                 continuation.resume(returning: results)
             }
-            
-            request.imageCropAndScaleOption = .scaleFill
-            
-            let handler = VNImageRequestHandler(ciImage: image, options: [:])
+
+            request.imageCropAndScaleOption = .scaleFit
+
+            let handler = VNImageRequestHandler(ciImage: image, orientation: orientation, options: [:])
             do {
                 try handler.perform([request])
             } catch {
@@ -149,19 +146,19 @@ class ObjectDetectionService {
     }
     
     /// Fallback: gunakan Vision built-in image classification jika YOLO model tidak tersedia
-    private func fallbackClassification(on image: CIImage) async throws -> [DetectionResult] {
+    private func fallbackClassification(on image: CIImage, orientation: CGImagePropertyOrientation) async throws -> [DetectionResult] {
         return try await withCheckedThrowingContinuation { continuation in
             let request = VNClassifyImageRequest { request, error in
                 if let error = error {
                     continuation.resume(throwing: error)
                     return
                 }
-                
+
                 guard let results = request.results as? [VNClassificationObservation] else {
                     continuation.resume(returning: [])
                     return
                 }
-                
+
                 let detections = results
                     .filter { $0.confidence > 0.1 }
                     .prefix(5)
@@ -172,19 +169,38 @@ class ObjectDetectionService {
                             category: CategoryMapper.map(label: classification.identifier),
                             suggestedName: CategoryMapper.suggestedName(for: classification.identifier),
                             boundingBox: .zero,
-                        hasBoundingBox: false
+                            hasBoundingBox: false
                         )
                     }
-                
+
                 continuation.resume(returning: Array(detections))
             }
-            
-            let handler = VNImageRequestHandler(ciImage: image, options: [:])
+
+            let handler = VNImageRequestHandler(ciImage: image, orientation: orientation, options: [:])
             do {
                 try handler.perform([request])
             } catch {
                 continuation.resume(throwing: error)
             }
+        }
+    }
+}
+
+// MARK: - UIImage orientation helper
+
+extension UIImage {
+    /// Konversi UIImage.Orientation ke CGImagePropertyOrientation yang dipakai Vision framework
+    var cgImageOrientation: CGImagePropertyOrientation {
+        switch imageOrientation {
+        case .up:            return .up
+        case .down:          return .down
+        case .left:          return .left
+        case .right:         return .right
+        case .upMirrored:    return .upMirrored
+        case .downMirrored:  return .downMirrored
+        case .leftMirrored:  return .leftMirrored
+        case .rightMirrored: return .rightMirrored
+        @unknown default:    return .up
         }
     }
 }
