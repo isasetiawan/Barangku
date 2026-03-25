@@ -19,6 +19,8 @@ struct DetectionResult: Identifiable {
     let suggestedName: String
     /// Bounding box dalam koordinat Vision (origin di bottom-left, normalized 0..1)
     let boundingBox: CGRect
+    /// True hanya jika bbox berasal dari object detection (YOLO), bukan image classification
+    let hasBoundingBox: Bool
 }
 
 /// Service untuk menjalankan YOLO object detection via CoreML + Vision
@@ -96,11 +98,13 @@ class ObjectDetectionService {
     /// Load YOLO CoreML model langsung dari bundle (skip generated class untuk menghindari warning precisionRecallCurves)
     private func loadYOLOModel() throws -> VNCoreMLModel? {
         guard let modelURL = Bundle.main.url(forResource: "YOLOv3", withExtension: "mlmodelc") else {
+            print("[ObjectDetectionService] ⚠️ YOLOv3.mlmodelc tidak ditemukan di bundle. Pastikan YOLOv3.mlmodel sudah ditambahkan ke Xcode target.")
             return nil
         }
         let config = MLModelConfiguration()
         config.computeUnits = .all
         let mlModel = try MLModel(contentsOf: modelURL, configuration: config)
+        print("[ObjectDetectionService] ✅ YOLOv3 model loaded dari \(modelURL.lastPathComponent)")
         return try VNCoreMLModel(for: mlModel)
     }
     
@@ -117,7 +121,8 @@ class ObjectDetectionService {
                         confidence: topLabel.confidence,
                         category: CategoryMapper.map(label: label),
                         suggestedName: CategoryMapper.suggestedName(for: label),
-                        boundingBox: observation.boundingBox
+                        boundingBox: observation.boundingBox,
+                        hasBoundingBox: true
                     )
                 }
                 .sorted { $0.confidence > $1.confidence }
@@ -134,7 +139,8 @@ class ObjectDetectionService {
                         confidence: classification.confidence,
                         category: CategoryMapper.map(label: classification.identifier),
                         suggestedName: CategoryMapper.suggestedName(for: classification.identifier),
-                        boundingBox: CGRect(x: 0, y: 0, width: 1, height: 1)
+                        boundingBox: .zero,
+                        hasBoundingBox: false
                     )
                 }
         }
@@ -165,7 +171,8 @@ class ObjectDetectionService {
                             confidence: classification.confidence,
                             category: CategoryMapper.map(label: classification.identifier),
                             suggestedName: CategoryMapper.suggestedName(for: classification.identifier),
-                            boundingBox: CGRect(x: 0, y: 0, width: 1, height: 1)
+                            boundingBox: .zero,
+                        hasBoundingBox: false
                         )
                     }
                 

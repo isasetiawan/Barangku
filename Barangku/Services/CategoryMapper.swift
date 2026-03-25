@@ -37,7 +37,6 @@ struct CategoryMapper {
         "remote": .electronics,
         "keyboard": .electronics,
         "mouse": .electronics,
-        "monitor": .electronics,
         "microwave": .electronics,
         "oven": .electronics,
         "toaster": .electronics,
@@ -63,6 +62,7 @@ struct CategoryMapper {
         "potted plant": .furniture,
         "clock": .furniture,
         "toilet": .furniture,
+        "bench": .furniture,
         
         // Clothing / Accessories
         "tie": .clothing,
@@ -70,6 +70,7 @@ struct CategoryMapper {
         "handbag": .accessories,
         "backpack": .accessories,
         "umbrella": .accessories,
+        "teddy bear": .accessories,
         
         // Sports
         "frisbee": .sports,
@@ -125,75 +126,9 @@ struct CategoryMapper {
         "toothbrush": .tools,
     ]
     
-    /// Suggest nama item berdasarkan label YOLO (dalam Bahasa Indonesia)
+    /// Suggest nama item berdasarkan label YOLO, mengikuti locale device
     static func suggestedName(for label: String) -> String {
-        let lowered = label.lowercased()
-        return labelToIndonesian[lowered] ?? label.capitalized
+        let key = "item_" + label.lowercased().replacingOccurrences(of: " ", with: "_")
+        return Bundle.main.localizedString(forKey: key, value: label.capitalized, table: nil)
     }
-    
-    private static let labelToIndonesian: [String: String] = [
-        "laptop": "Laptop",
-        "cell phone": "Handphone",
-        "tv": "Televisi",
-        "remote": "Remote",
-        "keyboard": "Keyboard",
-        "mouse": "Mouse",
-        "bottle": "Botol",
-        "wine glass": "Gelas Wine",
-        "cup": "Cangkir",
-        "fork": "Garpu",
-        "knife": "Pisau",
-        "spoon": "Sendok",
-        "bowl": "Mangkuk",
-        "chair": "Kursi",
-        "couch": "Sofa",
-        "bed": "Tempat Tidur",
-        "book": "Buku",
-        "clock": "Jam",
-        "scissors": "Gunting",
-        "backpack": "Ransel",
-        "handbag": "Tas Tangan",
-        "suitcase": "Koper",
-        "umbrella": "Payung",
-        "tie": "Dasi",
-        "bicycle": "Sepeda",
-        "car": "Mobil",
-        "motorcycle": "Motor",
-        "bus": "Bus",
-        "truck": "Truk",
-        "boat": "Perahu",
-        "airplane": "Pesawat",
-        "banana": "Pisang",
-        "apple": "Apel",
-        "sandwich": "Sandwich",
-        "orange": "Jeruk",
-        "pizza": "Pizza",
-        "cake": "Kue",
-        "donut": "Donat",
-        "hot dog": "Hot Dog",
-        "broccoli": "Brokoli",
-        "carrot": "Wortel",
-        "refrigerator": "Kulkas",
-        "microwave": "Microwave",
-        "oven": "Oven",
-        "toaster": "Toaster",
-        "sink": "Bak Cuci",
-        "toilet": "Toilet",
-        "potted plant": "Tanaman Pot",
-        "vase": "Vas",
-        "cat": "Kucing",
-        "dog": "Anjing",
-        "bird": "Burung",
-        "horse": "Kuda",
-        "sports ball": "Bola",
-        "tennis racket": "Raket Tenis",
-        "skateboard": "Skateboard",
-        "surfboard": "Papan Selancar",
-        "skis": "Ski",
-        "frisbee": "Frisbee",
-        "kite": "Layang-layang",
-        "hair drier": "Pengering Rambut",
-        "toothbrush": "Sikat Gigi",
-        "dining table": "Meja Makan",
-    ]
 }

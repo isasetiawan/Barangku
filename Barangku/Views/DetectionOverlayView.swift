@@ -37,8 +37,8 @@ struct DetectionOverlayView: View {
                         .scaledToFit()
                         .frame(width: viewSize.width, height: viewSize.height)
                     
-                    // Bounding boxes
-                    ForEach(results) { result in
+                    // Bounding boxes (hanya untuk hasil object detection, bukan image classification)
+                    ForEach(results.filter { $0.hasBoundingBox }) { result in
                         let rect = convertBoundingBox(
                             result.boundingBox,
                                 imageSize: imageSize,
